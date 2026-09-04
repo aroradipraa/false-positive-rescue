@@ -40,7 +40,7 @@ class RescueAgent:
         try:
             # Using the latest fast model
             response = self.client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-3.6-flash',
                 contents=prompt
             )
             decision = response.text.strip().upper()
