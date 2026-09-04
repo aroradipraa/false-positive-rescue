@@ -4,7 +4,6 @@ from agent import RescueAgent
 from mock_apis import TelecomAPI, OpenBankingAPI
 
 def ingest_blocked_transactions(filepath="blocked_transactions.csv"):
-    """Reads the synthetic dataset of blocked transactions."""
     transactions = []
     try:
         with open(filepath, mode='r') as file:
@@ -17,7 +16,6 @@ def ingest_blocked_transactions(filepath="blocked_transactions.csv"):
     return transactions
 
 def print_dashboard(total_analyzed, rescued_count, revenue_saved):
-    """Prints a professional ASCII dashboard for the hackathon demo."""
     print("\n" + "="*60)
     print(" 🛡️  RAZORPAY: FALSE-POSITIVE RESCUE METRICS  🛡️")
     print("="*60)
@@ -29,9 +27,6 @@ def print_dashboard(total_analyzed, rescued_count, revenue_saved):
     print("="*60 + "\n")
 
 def process_rescue_pipeline():
-    """
-    Core execution loop. Feeds blocked transactions to the AI Agent.
-    """
     print("\n🚀 INITIALIZING FALSE-POSITIVE RESCUE PIPELINE...")
     transactions = ingest_blocked_transactions()
     
@@ -39,7 +34,10 @@ def process_rescue_pipeline():
         return
         
     agent = RescueAgent()
-    demo_batch = transactions[:15]
+    
+    # We process exactly 4 transactions for the video demo.
+    # This guarantees we stay under Google's strict 5 Requests Per Minute free-tier limit.
+    demo_batch = transactions[:4]
     
     print(f"[SYSTEM] Batch processing {len(demo_batch)} high-value blocked transactions...\n")
     
@@ -53,17 +51,20 @@ def process_rescue_pipeline():
         telecom_data = TelecomAPI.check_roaming_status(txn['user_id'], int(txn['ip_risk_score']))
         banking_data = OpenBankingAPI.check_account_velocity(txn['user_id'], amt, txn['true_label'])
         
-        decision = agent.evaluate_transaction(txn, telecom_data, banking_data)
+        try:
+            decision = agent.evaluate_transaction(txn, telecom_data, banking_data)
+            
+            if decision == "RESCUE":
+                print(f"   ✅ [DECISION: RESCUE] AI Verified Legitimate User. Revenue recovered!")
+                rescued_count += 1
+                revenue_saved += amt
+            else:
+                print(f"   ❌ [DECISION: MAINTAIN BLOCK] AI Confirmed High Fraud Probability.")
+        except Exception as e:
+            print(f"   [ERROR] AI API Error: {e}")
+            
+        time.sleep(12) # 12 seconds x 4 requests = 48 seconds (keeps us under 5 RPM limit)
         
-        if decision == "RESCUE":
-            print(f"   ✅ [DECISION: RESCUE] Legitimate user verified. Revenue recovered!")
-            rescued_count += 1
-            revenue_saved += amt
-        else:
-            print(f"   ❌ [DECISION: MAINTAIN BLOCK] High fraud probability confirmed.")
-        time.sleep(1) # Prevent rate limiting
-        
-    # Output the final business metric dashboard
     print_dashboard(len(demo_batch), rescued_count, revenue_saved)
 
 if __name__ == "__main__":
