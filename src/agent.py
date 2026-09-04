@@ -35,9 +35,9 @@ class RescueAgent:
         Respond strictly with only one word: RESCUE or MAINTAIN_BLOCK.
         """
         
-        # We are using the standard, universally available gemini-1.5-flash model on the new SDK
+        # Using the required gemini-3.6-flash model for new accounts
         response = self.client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-3.6-flash',
             contents=prompt
         )
         decision = response.text.strip().upper()

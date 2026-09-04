@@ -17,17 +17,17 @@ def ingest_blocked_transactions(filepath="blocked_transactions.csv"):
 
 def print_dashboard(total_analyzed, rescued_count, revenue_saved):
     print("\n" + "="*60)
-    print(" 🛡️  RAZORPAY: FALSE-POSITIVE RESCUE METRICS  🛡️")
+    print(" [RAZORPAY: FALSE-POSITIVE RESCUE METRICS] ")
     print("="*60)
     print(f"  Transactions Analyzed : {total_analyzed}")
     print(f"  False Positives Caught: {rescued_count}")
     print(f"  Actual Fraud Blocked  : {total_analyzed - rescued_count}")
     print("-" * 60)
-    print(f"  💰 REVENUE RECOVERED  : ₹ {revenue_saved:,.2f} INR")
+    print(f"  [REVENUE RECOVERED]   : Rs. {revenue_saved:,.2f} INR")
     print("="*60 + "\n")
 
 def process_rescue_pipeline():
-    print("\n🚀 INITIALIZING FALSE-POSITIVE RESCUE PIPELINE...")
+    print("\n[INITIALIZING FALSE-POSITIVE RESCUE PIPELINE...]")
     transactions = ingest_blocked_transactions()
     
     if not transactions:
@@ -55,11 +55,11 @@ def process_rescue_pipeline():
             decision = agent.evaluate_transaction(txn, telecom_data, banking_data)
             
             if decision == "RESCUE":
-                print(f"   ✅ [DECISION: RESCUE] AI Verified Legitimate User. Revenue recovered!")
+                print(f"   [+] [DECISION: RESCUE] AI Verified Legitimate User. Revenue recovered!")
                 rescued_count += 1
                 revenue_saved += amt
             else:
-                print(f"   ❌ [DECISION: MAINTAIN BLOCK] AI Confirmed High Fraud Probability.")
+                print(f"   [-] [DECISION: MAINTAIN BLOCK] AI Confirmed High Fraud Probability.")
         except Exception as e:
             print(f"   [ERROR] AI API Error: {e}")
             
