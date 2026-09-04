@@ -16,15 +16,18 @@ def ingest_blocked_transactions(filepath="blocked_transactions.csv"):
     return transactions
 
 def print_dashboard(total_analyzed, rescued_count, revenue_saved):
-    print("\n" + "="*60)
-    print(" [RAZORPAY: FALSE-POSITIVE RESCUE METRICS] ")
-    print("="*60)
-    print(f"  Transactions Analyzed : {total_analyzed}")
-    print(f"  False Positives Caught: {rescued_count}")
-    print(f"  Actual Fraud Blocked  : {total_analyzed - rescued_count}")
-    print("-" * 60)
-    print(f"  [REVENUE RECOVERED]   : Rs. {revenue_saved:,.2f} INR")
-    print("="*60 + "\n")
+    print("\n")
+    print("+" + "-"*48 + "+")
+    print("|  RAZORPAY RISK PIPELINE: EXECUTION SUMMARY     |")
+    print("+" + "-"*48 + "+")
+    print(f"|  Total Evaluated       : {total_analyzed:<22} |")
+    print(f"|  Fraud Maintained      : {total_analyzed - rescued_count:<22} |")
+    print(f"|  False Positives Fixed : {rescued_count:<22} |")
+    print("|                                                |")
+    print(f"|  NET REVENUE RECOVERED : Rs. {revenue_saved:<14,.2f}    |")
+    print("+" + "-"*48 + "+\n")
+
+import random
 
 def process_rescue_pipeline():
     print("\n[INITIALIZING FALSE-POSITIVE RESCUE PIPELINE...]")
@@ -35,8 +38,8 @@ def process_rescue_pipeline():
         
     agent = RescueAgent()
     
-    # We process exactly 4 transactions for the video demo.
-    # This guarantees we stay under Google's strict 5 Requests Per Minute free-tier limit.
+    # Shuffle to ensure dynamic, unique results every run
+    random.shuffle(transactions)
     demo_batch = transactions[:4]
     
     print(f"[SYSTEM] Batch processing {len(demo_batch)} high-value blocked transactions...\n")
