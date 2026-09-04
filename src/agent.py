@@ -1,6 +1,6 @@
 import os
 import json
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,15 +15,10 @@ class RescueAgent:
         if not api_key or api_key == "PASTE_YOUR_GEMINI_KEY_HERE":
             raise ValueError("Gemini API key is missing. Add it to your .env file.")
         
-        genai.configure(api_key=api_key)
-        # Using flash for high-throughput, low-latency evaluation
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        # Using the new, supported google-genai SDK
+        self.client = genai.Client(api_key=api_key)
 
     def evaluate_transaction(self, txn_data: dict, telecom_data: dict, banking_data: dict) -> str:
-        """
-        Asks the LLM to act as a Risk Manager. It looks at the original blocked transaction
-        and the new triangulated data to decide if it should be RESCUED.
-        """
         prompt = f"""
         You are an AI Risk Manager for a Payment Gateway.
         A transaction was BLOCKED by the primary fraud ML model. You must decide whether to RESCUE (unblock) it or keep it BLOCKED.
@@ -43,7 +38,11 @@ class RescueAgent:
         """
         
         try:
-            response = self.model.generate_content(prompt)
+            # Using the latest fast model
+            response = self.client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
             decision = response.text.strip().upper()
             
             if "RESCUE" in decision:
@@ -51,6 +50,6 @@ class RescueAgent:
             return "MAINTAIN_BLOCK"
             
         except Exception as e:
-            # Strict Fail-Closed Architecture: If the LLM times out or errors, do NOT rescue.
-            print(f"[ERROR] LLM Evaluation failed: {e}")
+            # Strict Fail-Closed Architecture
+            print(f"\n   [WARNING] LLM API Error (Fail-Closed triggered): {e}")
             return "MAINTAIN_BLOCK"
