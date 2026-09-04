@@ -1,0 +1,5 @@
+razorpay
+google-generativeai
+pyyaml
+click
+python-dotenv
