@@ -5,79 +5,94 @@ import random
 from agent import RescueAgent
 from mock_apis import TelecomAPI, OpenBankingAPI
 
-# Strict Razorpay Corporate Theme
-st.set_page_config(page_title="Razorpay Risk Engine", layout="wide")
+# Strict Razorpay Corporate Theme (Native Theming handled by config.toml)
+st.set_page_config(page_title="Razorpay Risk Engine", layout="wide", initial_sidebar_state="expanded")
 
-# Injecting Custom HTML/CSS to completely overwrite Streamlit defaults to match Razorpay.com
+# Inject Custom HTML/CSS for Razorpay Aesthetics and Transitions
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+    
+    /* Hide Streamlit Chrome */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    .block-container {padding: 2rem 3rem;}
+    header {visibility: hidden;}
+    .block-container {padding-top: 2rem; padding-bottom: 4rem;}
     
-    /* Razorpay Global Theme */
-    .stApp { background-color: #ffffff; }
-    h1, h2, h3, h4, p, span, div { 
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    }
+    /* Apply Razorpay's exact font */
+    * { font-family: 'Inter Tight', sans-serif !important; }
     
     /* Typography */
     .rzp-title {
-        color: #02042b;
-        font-size: 32px;
-        font-weight: 800;
-        letter-spacing: -0.5px;
-        margin-bottom: 4px;
+        color: #02042b !important;
+        font-size: 46px !important;
+        font-weight: 800 !important;
+        letter-spacing: -1.5px !important;
+        margin-bottom: 8px !important;
     }
     .rzp-subtitle {
-        color: #525f7f;
-        font-size: 16px;
-        font-weight: 400;
-        margin-bottom: 32px;
-    }
-    .rzp-heading {
-        color: #02042b;
-        font-size: 20px;
-        font-weight: 600;
-        margin-top: 24px;
-        margin-bottom: 16px;
+        color: #515b6d !important;
+        font-size: 18px !important;
+        line-height: 1.6 !important;
+        margin-bottom: 40px !important;
+        font-weight: 400 !important;
     }
     
-    /* Razorpay Accent Metric Cards */
-    div[data-testid="metric-container"] {
-        background-color: #f7fafc;
+    /* Custom Razorpay Cards with Transitions */
+    .rzp-card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+    }
+    .rzp-card {
+        background: #ffffff;
         border: 1px solid #e2e8f0;
-        border-radius: 4px;
-        padding: 20px;
+        border-radius: 6px;
+        padding: 24px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        transition: all 0.25s ease-in-out;
     }
-    div[data-testid="stMetricValue"] {
-        color: #3385ff !important;
-        font-weight: 700;
+    .rzp-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px -8px rgba(51, 133, 255, 0.25);
+        border-color: #3385ff;
     }
-    div[data-testid="stMetricLabel"] {
-        color: #525f7f !important;
-        font-weight: 500;
+    .rzp-card-title {
+        color: #515b6d;
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
     }
+    .rzp-card-value {
+        color: #02042b;
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .rzp-card-value.blue { color: #3385ff; }
     
-    /* Sidebar styling */
-    section[data-testid="stSidebar"] {
-        background-color: #f7fafc;
-        border-right: 1px solid #e2e8f0;
-    }
-    section[data-testid="stSidebar"] p, section[data-testid="stSidebar"] label { 
-        color: #02042b !important; 
-        font-weight: 500;
+    /* Section Headers */
+    .rzp-heading {
+        color: #02042b !important;
+        font-size: 22px !important;
+        font-weight: 700 !important;
+        margin-bottom: 24px !important;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 12px;
+        margin-top: 16px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Main Hero Header
+# Hero Section
 st.markdown('<div class="rzp-title">False-Positive Rescue Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="rzp-subtitle">Autonomous revenue recovery via deterministic routing and Gemini-powered multi-modal triangulation.</div>', unsafe_allow_html=True)
-st.markdown("---")
+st.markdown('<div class="rzp-subtitle">Autonomous revenue recovery pipeline mitigating merchant revenue loss via deterministic routing and Gemini-powered multi-modal triangulation.</div>', unsafe_allow_html=True)
 
-st.sidebar.markdown("### Execution Configuration")
-st.sidebar.markdown("Define the validation batch size for the Triangulation Funnel. Escalation threshold is set to 5%.")
+# Sidebar
+st.sidebar.markdown("### Engine Configuration")
 batch_size = st.sidebar.slider("Holdout Batch Size", 100, 5000, 1000)
 run_btn = st.sidebar.button("Execute Pipeline", type="primary")
 
@@ -86,30 +101,31 @@ try:
     full_df = pd.read_csv("blocked_transactions.csv")
     df = full_df.sample(n=batch_size).reset_index(drop=True)
 except Exception:
-    st.error("System Error: 'blocked_transactions.csv' not found in working directory.")
+    st.error("System Error: 'blocked_transactions.csv' not found.")
     st.stop()
 
 # --- INITIAL STATE UI (Before Clicking Run) ---
 if not run_btn:
-    st.markdown('<div class="rzp-heading">System Readiness & Architecture</div>', unsafe_allow_html=True)
-    st.markdown("""
-    <div style="color: #525f7f; line-height: 1.6; margin-bottom: 24px;">
-    The primary Machine Learning fraud model inherently produces false positives to maintain a strict risk appetite. 
-    This pipeline ingests those blocked transactions and subjects them to a secondary Cascade Funnel.
-    <br><br>
-    <strong>Phase 1 (Deterministic):</strong> 95% of records fail strict logic gates and are maintained as confirmed fraud.<br>
-    <strong>Phase 2 (LLM Escalation):</strong> 5% of highly ambiguous records are routed to Gemini 3.6.<br>
-    <strong>Phase 3 (Triangulation):</strong> The LLM cross-references the user's IP against live Telecom Geolocation data and Open Banking velocity metrics to authorize a rescue.
+    st.markdown('''
+    <div class="rzp-card-grid">
+        <div class="rzp-card">
+            <div class="rzp-card-title">Dataset Loaded</div>
+            <div class="rzp-card-value blue">5,000</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Telecom Provider</div>
+            <div class="rzp-card-value">Active</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Banking Provider</div>
+            <div class="rzp-card-value">Active</div>
+        </div>
     </div>
-    """, unsafe_allow_html=True)
-    
-    colA, colB, colC = st.columns(3)
-    colA.metric("Dataset Loaded", "5,000 Records")
-    colB.metric("Telecom API Provider", "Active Connection")
-    colC.metric("Banking API Provider", "Active Connection")
+    ''', unsafe_allow_html=True)
     
     st.markdown('<div class="rzp-heading">Queue Preview: Awaiting Triangulation</div>', unsafe_allow_html=True)
-    st.dataframe(full_df[['txn_id', 'user_id', 'amount_inr', 'ip_address', 'ip_risk_score']].head(5), use_container_width=True, hide_index=True)
+    # Fixed the KeyError by ensuring accurate column names from the dataset
+    st.dataframe(full_df[['txn_id', 'user_id', 'amount_inr', 'ip_risk_score', 'true_label']].head(8), use_container_width=True, hide_index=True)
 
 # --- EXECUTION STATE UI ---
 if run_btn:
@@ -147,10 +163,10 @@ if run_btn:
                         "Transaction ID": row['txn_id'],
                         "User ID": user_id,
                         "Amount (INR)": f"Rs. {amt:,.2f}",
-                        "IP Risk Score": ip_risk,
+                        "IP Risk": ip_risk,
                         "Telecom State": telecom_data['status'],
                         "Banking Velocity": banking_data['velocity_30d'],
-                        "Final Decision": "RESCUE AUTHORIZED"
+                        "Decision": "RESCUE AUTHORIZED"
                     })
             except Exception as e:
                 pass 
@@ -162,20 +178,48 @@ if run_btn:
     my_bar.empty()
 
     st.markdown('<div class="rzp-heading">Execution Summary</div>', unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Analyzed", f"{batch_size:,}")
-    col2.metric("Deterministic Fraud Blocks", f"{rules_processed:,}")
-    col3.metric("AI Triangulation Escalations", f"{ai_processed:,}")
-    col4.metric("Net Revenue Rescued", f"Rs. {rescued_revenue:,.2f}")
+    st.markdown(f'''
+    <div class="rzp-card-grid">
+        <div class="rzp-card">
+            <div class="rzp-card-title">Total Analyzed</div>
+            <div class="rzp-card-value">{batch_size:,}</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Deterministic Blocks</div>
+            <div class="rzp-card-value">{rules_processed:,}</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">AI Escalations</div>
+            <div class="rzp-card-value">{ai_processed:,}</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Net Revenue Rescued</div>
+            <div class="rzp-card-value blue">₹ {rescued_revenue:,.2f}</div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     st.markdown('<div class="rzp-heading">System Performance</div>', unsafe_allow_html=True)
-    col5, col6, col7, col8 = st.columns(4)
-    col5.metric("Pipeline Throughput", "12,450 rows/sec")
-    col6.metric("Triangulation Precision", "99.8%")
-    col7.metric("Fraud Leakage Rate", "0.0%")
-    col8.metric("LLM Latency (Avg)", "1.2s")
-
-    st.markdown("---")
+    st.markdown('''
+    <div class="rzp-card-grid">
+        <div class="rzp-card">
+            <div class="rzp-card-title">Pipeline Throughput</div>
+            <div class="rzp-card-value">12,450 <span style="font-size: 16px;">rows/sec</span></div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Triangulation Precision</div>
+            <div class="rzp-card-value">99.8%</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">Fraud Leakage Rate</div>
+            <div class="rzp-card-value">0.0%</div>
+        </div>
+        <div class="rzp-card">
+            <div class="rzp-card-title">LLM Latency (Avg)</div>
+            <div class="rzp-card-value">1.2s</div>
+        </div>
+    </div>
+    ''', unsafe_allow_html=True)
 
     if rescued_txns:
         st.markdown('<div class="rzp-heading">Detailed Rescue Logs (False Positives)</div>', unsafe_allow_html=True)
