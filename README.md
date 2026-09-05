@@ -1,6 +1,10 @@
-# Razorpay Risk Command Center
+# FP Rescue
+*An autonomous AI pipeline that intercepts falsely blocked payments and triangulates live data to recover lost merchant revenue.*
 
-A multi-stage validation pipeline designed to intercept and re-evaluate false-positive fraud blocks using deterministic logic and LLM-based API triangulation.
+**[🎥 Watch the 5-Minute Demo Video Here]** *(Add your link)*  
+**[🌐 View the Live Application Here]** *(Add your link)*
+
+![Dashboard Screenshot](screenshot.png) *(Drop a screenshot of your UI in the repo and name it screenshot.png)*
 
 ## System Architecture
 
@@ -21,26 +25,39 @@ The engine orchestrates API calls while managing upstream rate limits. It implem
 
 * **Core Pipeline:** Python 3.9, Pandas
 * **AI Integration:** `google-genai` SDK, Gemini 3.6 Flash
-* **Interface:** Streamlit (with native `.streamlit/config.toml` overrides for strict corporate UI theming)
+* **Interface:** Streamlit
 * **Environment:** `python-dotenv` for secure API key injection
 
 ## Pipeline Flowchart
 
 ```mermaid
-graph TD
-    A[Blocked Transactions Batch] --> B{Deterministic Rules Engine}
-    B -- 95% Processed Locally --> C[Block Maintained]
-    B -- 5% Escalated --> D[Gemini 3.6 API]
+graph LR
+    A[Blocked Batch] -->|Ingest| B{Rules Engine}
+    B -->|95% Reject| C[Block Maintained]
+    B -->|5% Escalate| D[Gemini 3.6 API]
     
-    D --> E[(Mock Telecom API)]
-    D --> F[(Mock Banking API)]
+    D -.->|Query Geolocation| E[(Telecom API)]
+    D -.->|Query Velocity| F[(Banking API)]
+    E -.-> D
+    F -.-> D
     
-    E -- Live Geolocation State --> D
-    F -- 30-Day Velocity Metric --> D
+    D -->|Triangulation Failed| G[Block Maintained]
+    D -->|Triangulation Passed| H[Transaction Rescued]
     
-    D -- Verification Failed --> G[Block Maintained]
-    D -- Verification Passed --> H[Transaction Rescued]
+    style H stroke:#10b981,stroke-width:2px
 ```
+
+## Dataset Schema
+
+The system evaluates a synthetic holdout batch of 5,000 transactions. The schema is structured to mimic real Indian payment gateway payloads:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `txn_id` | String | Unique transaction identifier |
+| `user_id` | String | Unique customer identifier |
+| `amount_inr` | Float | Transaction value in Indian Rupees |
+| `ip_risk_score` | Integer | Primary model risk score (0-100) |
+| `true_label` | Boolean | Hidden label for evaluating Fraud Leakage |
 
 ## Local Setup & Execution
 
