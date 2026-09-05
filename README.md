@@ -31,19 +31,23 @@ The engine orchestrates API calls while managing upstream rate limits. It implem
 ## Pipeline Flowchart
 
 ```mermaid
-graph LR
-    A[Blocked Batch] -->|Ingest| B{Rules Engine}
-    B -->|95% Reject| C[Block Maintained]
-    B -->|5% Escalate| D[Gemini 3.6 API]
+graph TD
+    A[Blocked Transactions Batch] --> B{Deterministic Rules Engine}
+    B -- 95% Processed Locally --> C[Block Maintained]
+    B -- 5% Escalated --> D[Gemini 3.6 API]
     
-    D -.->|Query Geolocation| E[(Telecom API)]
-    D -.->|Query Velocity| F[(Banking API)]
-    E -.-> D
-    F -.-> D
+    D --> E[(Mock Telecom API)]
+    D --> F[(Mock Banking API)]
     
-    D -->|Triangulation Failed| G[Block Maintained]
-    D -->|Triangulation Passed| H[Transaction Rescued]
+    E -- Live Geolocation State --> D
+    F -- 30-Day Velocity Metric --> D
     
+    D -- Verification Failed --> G[Block Maintained]
+    D -- Verification Passed --> H[Transaction Rescued]
+    
+    %% Invisible padding to push GitHub's UI buttons away from the text
+    H ~~~ Z[" "]
+    style Z fill:none,stroke:none,color:none
     style H stroke:#10b981,stroke-width:2px
 ```
 
