@@ -38,7 +38,7 @@ class RescueAgent:
         {{"decision": "RESCUE", "confidence_score": 98.5}}
         """
         
-        # Using the required gemini-3.6-flash model for new accounts
+        # Using the required gemini-3.6-flash model for high-speed reasoning
         response = self.client.models.generate_content(
             model='gemini-3.6-flash',
             contents=prompt

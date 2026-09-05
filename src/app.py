@@ -5,24 +5,20 @@ import random
 from agent import RescueAgent
 from mock_apis import TelecomAPI, OpenBankingAPI
 
-# Strict Razorpay Corporate Theme (Native Theming handled by config.toml)
-st.set_page_config(page_title="Razorpay Risk Engine", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="FP Rescue", layout="wide")
 
-# Inject Custom HTML/CSS for Razorpay Aesthetics and Transitions
+# --- CUSTOM CSS FOR RAZORPAY ENTERPRISE THEME ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700;800&display=swap');
+    /* Force Inter Tight font for the body, but explicitly exclude Streamlit's Material icons */
+    @import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;600;700;800&display=swap');
     
-    /* Hide Streamlit Chrome */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .block-container {padding-top: 2rem; padding-bottom: 4rem;}
+    body, p, div, h1, h2, h3, h4, h5, h6, span, td, th {
+        font-family: 'Inter Tight', sans-serif !important;
+    }
     
-    /* Apply Razorpay's exact font */
-    * { font-family: 'Inter Tight', sans-serif; }
-    
-    /* CRITICAL FIX: Protect Streamlit Native Icons */
-    .material-symbols-rounded, .material-icons {
+    /* Protect Material Icons so UI elements like arrows don't break */
+    .material-symbols-rounded, .material-icons, .stIcon, [data-testid="stIconMaterial"] {
         font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
     }
     
@@ -71,7 +67,7 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         animation: slideUpFade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        opacity: 0; /* Starts hidden for animation */
+        opacity: 0;
     }
     .rzp-card:hover {
         transform: translateY(-6px);
@@ -128,7 +124,7 @@ st.markdown("""
 
 # Hero Section
 st.markdown('<div class="rzp-title">False-Positive Rescue Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="rzp-subtitle">Intercepting false-positive fraud blocks in real-time. This engine uses Gemini 3.6 to cross-reference live Telecom and Banking APIs, safely unblocking legitimate customers and recovering lost revenue.</div>', unsafe_allow_html=True)
+st.markdown('<div class="rzp-subtitle">Intercepting false-positive fraud blocks in real-time. This engine uses Gemini 3.7 to cross-reference live Telecom and Banking APIs, safely unblocking legitimate customers and recovering lost revenue.</div>', unsafe_allow_html=True)
 
 st.info("**How the Simulation Works:** \n"
         "1. **Ingest:** We load 5,000 recently blocked transactions into the holdout queue.\n"
@@ -139,7 +135,7 @@ st.info("**How the Simulation Works:** \n"
 st.sidebar.markdown("### Control Panel")
 st.sidebar.caption("Adjust the parameters below and execute the pipeline to watch the AI rescue transactions in real-time.")
 exec_mode = st.sidebar.selectbox("Execution Mode", ["Shadow Mode (Audit Only)", "Active Enforcement"])
-batch_size = st.sidebar.slider("Holdout Batch Size", 100, 5000, 1000)
+batch_size = st.sidebar.slider("Holdout Batch Size", 100, 5000, 100)
 preview_rows = st.sidebar.slider("Preview Rows", 5, 50, 8)
 run_btn = st.sidebar.button("Execute Pipeline", type="primary")
 
@@ -160,7 +156,7 @@ def mask_pii(identifier):
 
 # --- INITIAL STATE UI (Before Clicking Run) ---
 if not run_btn:
-    st.markdown('''
+    st.markdown(f'''
     <div class="rzp-card-grid">
         <div class="rzp-card">
             <div class="rzp-card-title">Dataset Loaded</div>
@@ -207,11 +203,12 @@ if run_btn:
         # --- REAL DETERMINISTIC RULES ENGINE ---
         # Instead of 'random', we use deterministic hash-based routing.
         # Rule 1: Extreme risk scores (>92) hit the blocklist deterministically.
-        # Rule 2: To simulate a massive pipeline, we route exactly 5% of ambiguous 
-        # traffic (risk 70-92) to the LLM based on the transaction hash.
+        # Rule 2: We route a percentage of ambiguous traffic (risk 70-92) to the LLM.
+        # We dynamically increase the routing rate for small demo batches to guarantee visibility.
+        escalation_rate = 5 if batch_size >= 1000 else 35
         traffic_hash = int(txn_id[-4:], 16) % 100
         
-        if ip_risk > 92 or ip_risk < 70 or traffic_hash > 5:
+        if ip_risk > 92 or ip_risk < 70 or traffic_hash > escalation_rate:
             rules_processed += 1
         else:
             ai_processed += 1
@@ -243,7 +240,8 @@ if run_btn:
                         "Action": action_taken
                     })
             except Exception as e:
-                pass 
+                # Expose the API error to the UI so we can see if the 3.7 quota fails
+                st.error(f"Google API Error: {str(e)}") 
             
             # Strict Rate Limiting to prevent Gemini API exhaustion
             time.sleep(12.5) 
