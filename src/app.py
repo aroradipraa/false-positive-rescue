@@ -20,7 +20,12 @@ st.markdown("""
     .block-container {padding-top: 2rem; padding-bottom: 4rem;}
     
     /* Apply Razorpay's exact font */
-    * { font-family: 'Inter Tight', sans-serif !important; }
+    * { font-family: 'Inter Tight', sans-serif; }
+    
+    /* CRITICAL FIX: Protect Streamlit Native Icons */
+    .material-symbols-rounded, .material-icons {
+        font-family: 'Material Symbols Rounded', 'Material Icons', sans-serif !important;
+    }
     
     /* Typography */
     .rzp-title {
